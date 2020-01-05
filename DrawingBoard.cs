@@ -20,6 +20,7 @@ namespace OpenPaint
 {
     using Sys = System.Windows.Controls;
     using System.Reflection;
+    using OpenPaint.Utility;
     /// <summary>
     /// 画板，一个画板可以有很多图层
     /// 实际上一个画板对应一副图像
@@ -35,17 +36,24 @@ namespace OpenPaint
         DrawingVisual shape = null;
 
         /// <summary>
+        /// 画板对应的图像描述信息
+        /// </summary>
+        public Utility.BitmapDescription BitmapDescription { get; set; }
+
+        /// <summary>
         /// 画板至少拥有一个图层
         /// </summary>
-        public DrawingBoard()
+        public DrawingBoard(Utility.BitmapDescription bitmapDescription)
         {
+            this.BitmapDescription = bitmapDescription;
+
             this.HorizontalContentAlignment = HorizontalAlignment.Center;
             this.VerticalContentAlignment = VerticalAlignment.Center;
             this.Background = new SolidColorBrush(Colors.Gray);
 
             inkCanvas = new Canvas();
-            inkCanvas.Width = 800;
-            inkCanvas.Height = 600;
+            inkCanvas.Width = bitmapDescription.Width;
+            inkCanvas.Height = bitmapDescription.Height;
             inkCanvas.Background = (Brush)FindResource("CheckerBrush");
             this.Content = inkCanvas;
 
@@ -125,6 +133,11 @@ namespace OpenPaint
                             break;
                         case Shapes.DrawingMode.Rectangle:
                             dc.DrawRectangle(Brushes.Transparent, pen, new Rect(startPoint, endPoint));
+                            break;
+                        case Shapes.DrawingMode.Ellipse:
+                            Point centerPoint = new Point((startPoint.X + endPoint.X)/2, (startPoint.Y + endPoint.Y)/2);
+                            dc.DrawEllipse(Brushes.Transparent, pen, centerPoint,
+                                Math.Abs(startPoint.X - endPoint.X)/2, Math.Abs(startPoint.Y - endPoint.Y) / 2);
                             break;
                     }
                 }
@@ -239,6 +252,53 @@ namespace OpenPaint
             var drawingBoard = d as DrawingBoard;
             var drawingAttributes = drawingBoard.inkCanvas.DefaultDrawingAttributes;
             drawingAttributes.Width = drawingAttributes.Height = drawingBoard.PenThickness;
+        }
+
+        public void AddBitmap(BitmapSource image)
+        {
+            DrawingVisual visual = new DrawingVisual();
+            using (var dc = visual.RenderOpen())
+            {
+                dc.DrawImage(image, new Rect(0, 0, image.PixelWidth, image.PixelHeight));
+            }
+            CurrentLayer.AddVisual(visual);
+        }
+
+        /// <summary>
+        /// 获取画板上的图像
+        /// </summary>
+        /// <returns></returns>
+        internal BitmapSource ToBitmap()
+        {
+            var bmpDesc = this.BitmapDescription;
+            var bitmap = new RenderTargetBitmap(bmpDesc.Width, bmpDesc.Height, bmpDesc.DPI_X, bmpDesc.DPI_Y, PixelFormats.Default);
+            bitmap.Render(this.inkCanvas);
+            return bitmap;
+        }
+
+        internal void SetFileName(string filename)
+        {
+            this.BitmapDescription.Name = filename;
+        }
+        /// <summary>
+        /// 保存图像，返回图像文件名
+        /// </summary>
+        internal string Save()
+        {
+            // 根据文档名称判断是否有该文件，如果有的话就直接覆盖，没有就弹出保存对话框
+            var bmpDesc = BitmapDescription;
+            if (System.IO.File.Exists(bmpDesc.Name))
+                BitmapHelper.Save(ToBitmap(), bmpDesc.Name);
+            else
+                bmpDesc.Name = BitmapHelper.SaveAs(ToBitmap(), bmpDesc.Name);
+            return bmpDesc.Name;
+        }
+        /// <summary>
+        /// 图像另存为
+        /// </summary>
+        internal void SaveAs()
+        {
+            BitmapHelper.SaveAs(ToBitmap(), BitmapDescription.Name);
         }
     }
 }

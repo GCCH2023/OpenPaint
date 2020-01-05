@@ -41,34 +41,46 @@
     <Window.DataContext>
         <local:Global/>
     </Window.DataContext>
+    <Window.CommandBindings>
+        <CommandBinding Command="New" Executed="NewCommand_Executed"/>
+        <CommandBinding Command="Open" Executed="OpenCommand_Executed"/>
+        <CommandBinding Command="Save" Executed="SaveCommand_Executed"  CanExecute="CanSaveCommandExecuted"/>
+        <CommandBinding Command="SaveAs" Executed="SaveAsCommand_Executed"  CanExecute="CanSaveAsCommandExecuted"/>
+    </Window.CommandBindings>
     <DockPanel>
         <!-- 菜单栏 -->
         <Menu DockPanel.Dock="Top">
-            <MenuItem Header="示例"/>
+            <MenuItem Header="文件(_F)">
+                <MenuItem Command="New"/>
+                <MenuItem Command="Open"/>
+                <MenuItem Command="Save"/>
+                <MenuItem Command="SaveAs"/>
+            </MenuItem>
         </Menu>
 
         <!-- 菜单栏以外的区域 -->
         <Grid>
             <!-- 分成三个部分，中间有两个分割条 -->
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="12.418"/>
+                <ColumnDefinition Width="143.582"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <GridSplitter Grid.Column="1"/>
-            <GridSplitter Grid.Column="3"/>
+            <GridSplitter Grid.Column="2"/>
+            <GridSplitter Grid.Column="4"/>
 
-            <DockPanel Grid.Column="0">
+            <DockPanel Grid.Column="0" Grid.ColumnSpan="2">
                 <WrapPanel DockPanel.Dock="Top">
                     <Button Click="AddLayer_Click">新建图层</Button>
                     <Button Click="DeleteLayer_Click">删除图层</Button>
                     <Button Click="Debug_Click">测试图层</Button>
                 </WrapPanel>
-                
-                <ListBox Name="layerList" SelectedIndex="0" ItemsSource="{Binding Layers, ElementName=drawingBoard, UpdateSourceTrigger=PropertyChanged}">
+
+                <ListBox Name="layerList" SelectedIndex="0" ItemsSource="{Binding SelectedItem.Content.Layers, ElementName=tabBoard}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <DockPanel>
@@ -84,8 +96,8 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
             </DockPanel>
-            
-            <DockPanel Grid.Column="2">
+
+            <DockPanel Grid.Column="3">
                 <!--颜色选择器-->
                 <ctl:ColorPicker x:Name="colorPicker" DockPanel.Dock="Top"/>
 
@@ -105,14 +117,12 @@
                 <ListBox Name="toolList" SelectedIndex="0"
                      ItemsSource="{Binding Source={StaticResource ToolStateEnum}}"/>
             </DockPanel>
-          
 
 
-            <local:DrawingBoard x:Name="drawingBoard" Grid.Column="4"
-                                CurrentLayer="{Binding SelectedItem,ElementName=layerList}"
-                                DrawingMode="{Binding SelectedItem, ElementName=toolList}"
-                                Color="{Binding SelectedColor, ElementName=colorPicker}"
-                                PenThickness="{Binding Value, ElementName=penSize}"/>
+            <TabControl Grid.Column="5" Name="tabBoard" Background="Gray" SelectedIndex="0">
+                
+            </TabControl>
+            
         </Grid>
     </DockPanel>
 </Window>

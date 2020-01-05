@@ -26,5 +26,9 @@ namespace OpenPaint.Shapes
         /// 画矩形
         /// </summary>
         Rectangle,
+        /// <summary>
+        /// 画椭圆
+        /// </summary>
+        Ellipse,
     }
 }
